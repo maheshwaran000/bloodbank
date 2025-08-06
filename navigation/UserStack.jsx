@@ -1,25 +1,54 @@
 // src/navigation/UserStack.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-import UserDashboard, { DashboardScreen } from '../screens/AuthScreens/UserScrens/UserDashboard';
-// import RequestScreen from '../screens/AuthScreens/UserScrens/RequestScreen';
-import RequestScreen from '../screens/AuthScreens/bottomTabs/RequestScreen';
-// import ProfileScreen from '../screens/AuthScreens/UserScrens/ProfileScreen';
+// Screens
+// import UserDashboard from '../screens/AuthScreens/UserScrens/UserDashboard';
+// import RequestScreen from '../screens/AuthScreens/bottomTabs/RequestScreen';
+import DashboardScreen from '../screens/AuthScreens/bottomTabs/RequestScreen';
 import ProfileScreen from '../screens/AuthScreens/bottomTabs/Profile';
+import CreatePostScreen from '../screens/AuthScreens/UserScrens/createRequest';
+import UserRequestsScreen from '../screens/AuthScreens/UserScrens/userRequests';
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
 const ACCENT = '#4F46E5';
 const INACTIVE = '#777';
 
+// Home Stack
+const HomeStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+     <Stack.Screen name="Request" component={DashboardScreen} />
+    {/* <Stack.Screen name="Dashboard" component={UserDashboard} /> */}
+    <Stack.Screen name="CreatePost" component={CreatePostScreen} />
+
+  </Stack.Navigator>
+);
+
+// Request Stack
+const RequestStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="UserRequests" component={UserRequestsScreen} />
+  </Stack.Navigator>
+);
+
+// Profile Stack
+const ProfileStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="Profile" component={ProfileScreen} />
+  </Stack.Navigator>
+);
+
+// Main Tab Navigator
 const UserStack = () => (
   <Tab.Navigator
     screenOptions={({ route }) => ({
       tabBarIcon: ({ focused, color, size }) => {
         let iconName;
-        
+
         if (route.name === 'Home') {
           iconName = focused ? 'home' : 'home-outline';
         } else if (route.name === 'Request') {
@@ -27,7 +56,7 @@ const UserStack = () => (
         } else if (route.name === 'Profile') {
           iconName = focused ? 'account-circle' : 'account-circle-outline';
         }
-        
+
         return <Icon name={iconName} size={size} color={color} />;
       },
       tabBarActiveTintColor: ACCENT,
@@ -49,17 +78,17 @@ const UserStack = () => (
   >
     <Tab.Screen 
       name="Home" 
-      component={DashboardScreen}
+      component={HomeStack}
       options={{ tabBarLabel: 'Home' }}
     />
     <Tab.Screen 
       name="Request" 
-      component={RequestScreen}
+      component={RequestStack}
       options={{ tabBarLabel: 'Request' }}
     />
     <Tab.Screen 
       name="Profile" 
-      component={ProfileScreen}
+      component={ProfileStack}
       options={{ tabBarLabel: 'Profile' }}
     />
   </Tab.Navigator>

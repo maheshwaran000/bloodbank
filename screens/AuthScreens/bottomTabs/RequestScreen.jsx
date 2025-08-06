@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 
 const THEME = {
   primary: '#D90429',
@@ -74,15 +75,22 @@ function timeAgo(iso) {
 
 function urgencyStyle(u) {
   switch (u) {
-    case 'normal': return { bg: '#ECF6FF', txt: '#0C4A6E' };
-    case 'soon': return { bg: '#FFF3E6', txt: '#9A3412' };
-    case 'urgent': return { bg: '#FFE8EA', txt: '#7F1D1D' };
-    case 'critical': return { bg: '#FFE6EB', txt: '#7A0E26' };
-    default: return { bg: '#EEF2F7', txt: THEME.muted };
+    case 'normal':
+      return { bg: '#ECF6FF', txt: '#0C4A6E' };
+    case 'soon':
+      return { bg: '#FFF3E6', txt: '#9A3412' };
+    case 'urgent':
+      return { bg: '#FFE8EA', txt: '#7F1D1D' };
+    case 'critical':
+      return { bg: '#FFE6EB', txt: '#7A0E26' };
+    default:
+      return { bg: '#EEF2F7', txt: THEME.muted };
   }
 }
 
-export default function DashboardScreen({ onCreatePost, onOpenPost }) {
+// Removed props onCreatePost and onOpenPost
+export default function DashboardScreen() {
+  const navigation = useNavigation(); // Get the navigation object with the hook
   const [tab, setTab] = useState('Feed');
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -97,26 +105,29 @@ export default function DashboardScreen({ onCreatePost, onOpenPost }) {
   useEffect(() => {
     const currentUser = auth().currentUser;
     if (!currentUser) {
-      console.error("No authenticated user found for DashboardScreen.");
+      console.error('No authenticated user found for DashboardScreen.');
       setLoading(false);
       return;
     }
 
     // Set up a real-time listener for the user's document
     const userDocRef = firestore().collection('users').doc(currentUser.uid);
-    const unsubscribeUser = userDocRef.onSnapshot(docSnapshot => {
-      if (docSnapshot.exists) {
-        setUserData(docSnapshot.data());
-      } else {
-        console.warn("User document does not exist for UID:", currentUser.uid);
+    const unsubscribeUser = userDocRef.onSnapshot(
+      (docSnapshot) => {
+        if (docSnapshot.exists) {
+          setUserData(docSnapshot.data());
+        } else {
+          console.warn('User document does not exist for UID:', currentUser.uid);
+          setUserData(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error fetching user data:', error);
+        setLoading(false);
         setUserData(null);
-      }
-      setLoading(false);
-    }, error => {
-      console.error("Error fetching user data:", error);
-      setLoading(false);
-      setUserData(null);
-    });
+      },
+    );
 
     // Set up real-time listener for posts
     const postsQuery = firestore()
@@ -124,27 +135,32 @@ export default function DashboardScreen({ onCreatePost, onOpenPost }) {
       .orderBy('createdAt', 'desc')
       .limit(50);
 
-    const unsubscribePosts = postsQuery.onSnapshot(querySnapshot => {
-      const rows = [];
-      querySnapshot.forEach(doc => {
-        const d = doc.data() || {};
-        rows.push({
-          id: doc.id,
-          type: d.type || 'receiver',
-          name: d.name || 'Unknown',
-          bloodGroup: d.bloodGroup || 'O+',
-          location: d.location || 'Unknown',
-          urgency: d.urgency || 'normal',
-          notes: d.notes || '',
-          createdAt: (d.createdAt && d.createdAt.toDate && d.createdAt.toDate().toISOString()) || new Date().toISOString(),
+    const unsubscribePosts = postsQuery.onSnapshot(
+      (querySnapshot) => {
+        const rows = [];
+        querySnapshot.forEach((doc) => {
+          const d = doc.data() || {};
+          rows.push({
+            id: doc.id,
+            type: d.type || 'receiver',
+            name: d.name || 'Unknown',
+            bloodGroup: d.bloodGroup || 'O+',
+            location: d.location || 'Unknown',
+            urgency: d.urgency || 'normal',
+            notes: d.notes || '',
+            createdAt:
+              (d.createdAt && d.createdAt.toDate && d.createdAt.toDate().toISOString()) ||
+              new Date().toISOString(),
+          });
         });
-      });
-      setFetched(rows);
-      setLoading(false);
-    }, error => {
-      console.error("Error fetching posts:", error);
-      setLoading(false);
-    });
+        setFetched(rows);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error fetching posts:', error);
+        setLoading(false);
+      },
+    );
 
     // Clean up listeners
     return () => {
@@ -162,7 +178,10 @@ export default function DashboardScreen({ onCreatePost, onOpenPost }) {
     if (tab === 'Requests') items = items.filter((p) => p.type === 'receiver');
 
     if (typeFilter) items = items.filter((p) => p.type === typeFilter);
-    if (groupFilter) items = items.filter((p) => (p.bloodGroup || '').toUpperCase() === groupFilter.toUpperCase());
+    if (groupFilter)
+      items = items.filter(
+        (p) => (p.bloodGroup || '').toUpperCase() === groupFilter.toUpperCase(),
+      );
     if (urgencyFilter) items = items.filter((p) => (p.urgency || '') === urgencyFilter);
 
     if (query.trim()) {
@@ -172,7 +191,7 @@ export default function DashboardScreen({ onCreatePost, onOpenPost }) {
           (p.location || '').toLowerCase().includes(q) ||
           (p.notes || '').toLowerCase().includes(q) ||
           (p.name || '').toLowerCase().includes(q) ||
-          (p.bloodGroup || '').toLowerCase() === q
+          (p.bloodGroup || '').toLowerCase() === q,
       );
     }
     return items;
@@ -190,7 +209,7 @@ export default function DashboardScreen({ onCreatePost, onOpenPost }) {
     setUrgencyFilter('');
   };
 
-  const userName = userData?.name || "User";
+  const userName = userData?.name || 'User';
 
   const FiltersSheet = (
     <Modal transparent animationType="slide" visible={showFilters} onRequestClose={() => setShowFilters(false)}>
@@ -310,7 +329,8 @@ export default function DashboardScreen({ onCreatePost, onOpenPost }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
-          <Card post={item} onPress={() => onOpenPost && onOpenPost(item)} />
+          // Direct navigation call inside the onPress handler
+          <Card post={item} onPress={() => navigation.navigate('PostDetailsScreen', { post: item })} />
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -329,7 +349,11 @@ export default function DashboardScreen({ onCreatePost, onOpenPost }) {
       />
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} activeOpacity={0.92} onPress={onCreatePost}>
+      <TouchableOpacity
+        style={styles.fab}
+        activeOpacity={0.92}
+        onPress={() => navigation.navigate('CreatePost')} // Direct navigation call
+      >
         <Text style={styles.fabPlus}>＋</Text>
         <Text style={styles.fabText}>Create Post</Text>
       </TouchableOpacity>
@@ -422,7 +446,7 @@ function Pill({ label, selected, onPress }) {
 /* Styles */
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: THEME.bg,paddingTop:20, },
+  root: { flex: 1, backgroundColor: THEME.bg, paddingTop: 20 },
 
   // Brand
   brandBar: {
@@ -430,17 +454,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom:20,
+    paddingBottom: 20,
     gap: 10,
   },
   logoWrap: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: THEME.red,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: THEME.red,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   logoDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#FFFFFFAA' },
   brandText: { fontSize: 23, fontWeight: '600', color: THEME.text },
-  userGreeting: { fontSize: 16, fontWeight: '600', color:"#1E90FF", marginLeft: 'auto' },
+  userGreeting: { fontSize: 16, fontWeight: '600', color: '#1E90FF', marginLeft: 'auto' },
 
   // Search
   searchBar: {
@@ -452,8 +484,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginHorizontal: 16,
     marginTop: 4,
-    marginBottom:10,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 1,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
   },
   searchIcon: { fontSize: 18, color: THEME.muted, marginRight: 8 },
   searchInput: { flex: 1, color: THEME.text },
@@ -473,7 +509,11 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 4,
     flexDirection: 'row',
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
   },
   segmentItem: {
     flex: 1,
@@ -497,7 +537,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 6,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
   },
   filtersIcon: { fontSize: 16 },
   filtersText: { fontWeight: '800', color: THEME.text },
@@ -512,7 +556,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   marker: { width: 6, borderRadius: 3, backgroundColor: THEME.red, marginRight: 12 },
   cardBody: { flex: 1 },
@@ -591,18 +639,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   fabPlus: { color: '#FFFFFF', fontSize: 22, marginRight: 2 },
   fabText: { color: '#FFFFFF', fontWeight: '800' },
 
   // Filters sheet
   sheetBackdrop: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.25)',
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
   sheet: {
     position: 'absolute',
-    left: 0, right: 0, bottom: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: THEME.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -610,7 +665,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sheetHandle: {
-    alignSelf: 'center', width: 48, height: 4, borderRadius: 2, backgroundColor: '#E5E7EB', marginBottom: 8,
+    alignSelf: 'center',
+    width: 48,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E5E7EB',
+    marginBottom: 8,
   },
   sheetTitle: { fontSize: 16, fontWeight: '800', color: THEME.text, marginBottom: 4 },
   groupLabel: { fontWeight: '700', color: THEME.muted, marginTop: 6, marginBottom: 4 },
@@ -628,11 +688,21 @@ const styles = StyleSheet.create({
   pillTextActive: { color: '#FFFFFF' },
   sheetActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   ghostBtn: {
-    height: 44, paddingHorizontal: 18, borderRadius: 12, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center',
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ghostText: { color: THEME.black, fontWeight: '800' },
   applyBtn: {
-    height: 44, paddingHorizontal: 18, borderRadius: 12, backgroundColor: THEME.primary, alignItems: 'center', justifyContent: 'center',
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    backgroundColor: THEME.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   applyText: { color: '#FFFFFF', fontWeight: '800' },
 });

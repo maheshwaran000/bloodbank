@@ -42,7 +42,7 @@ const emergencyRequests = [
   },
 ];
 
-export const DashboardScreen = ({ navigation }) => { // Removed 'user' prop
+const DashboardScreen = ({ navigation }) => { // Removed 'user' prop
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -233,6 +233,8 @@ export const DashboardScreen = ({ navigation }) => { // Removed 'user' prop
     </View>
   );
 };
+
+export default DashboardScreen;
 
 const styles = StyleSheet.create({
   container: {
