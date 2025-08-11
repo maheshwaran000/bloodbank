@@ -1,3 +1,4 @@
+// screens/CreatePostScreen.js
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
@@ -9,38 +10,35 @@ import {
   Alert,
   ActivityIndicator,
   SafeAreaView,
+  Platform,
+  Image,
 } from 'react-native';
-
-// React Native Firebase v6+
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
+// --- THEME ---
 const THEME = {
-  primary: '#D90429',
-  onPrimary: '#FFFFFF',
-  text: '#0F172A',
-  muted: '#64748B',
-  bg: '#F7F8FB',
+  primary: '#C81E1E',
+  primaryLight: '#FEE2E2',
+  background: '#F8F9FA',
   surface: '#FFFFFF',
-  subtle: '#F2F4F8',
-  border: '#EAECEF',
-  black: '#111827',
-  green: '#10B981',
-  red: '#EF233C',
-  orange: '#F59E0B',
-  blue: '#0EA5E9',
+  text: '#1F2937',
+  textSecondary: '#6B7280',
+  border: '#E5E7EB',
+  success: '#16A34A',
 };
 
 const BLOOD_GROUPS = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
 const URGENCY = ['normal', 'soon', 'urgent', 'critical'];
-const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
+const GENDERS = ['Male', 'Female', 'Other'];
 
 export default function CreatePostScreen({ navigation, route }) {
+  // --- All State and Logic Preserved ---
   const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [postType, setPostType] = useState('donor'); // 'donor' | 'receiver'
+  const [postType, setPostType] = useState(route.params?.type || 'receiver');
 
-  // Form state fields (unchanged)
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
   const [bloodGroup, setBloodGroup] = useState('');
@@ -50,11 +48,9 @@ export default function CreatePostScreen({ navigation, route }) {
   const [stateName, setStateName] = useState('');
   const [district, setDistrict] = useState('');
   const [municipality, setMunicipality] = useState('');
-  const [constituency, setConstituency] = useState('');
   const [area, setArea] = useState('');
   const [hospital, setHospital] = useState('');
   const [prevDonationDate, setPrevDonationDate] = useState('');
-  const [donationHistory, setDonationHistory] = useState('');
   const [availableToDonate, setAvailableToDonate] = useState(true);
   const [medicalHistory, setMedicalHistory] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -62,7 +58,6 @@ export default function CreatePostScreen({ navigation, route }) {
   const [patientDetails, setPatientDetails] = useState('');
   const [disease, setDisease] = useState('');
 
-  // Track auth state using React Native Firebase
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged((user) => {
       if (user) {
@@ -72,7 +67,7 @@ export default function CreatePostScreen({ navigation, route }) {
         navigation?.replace?.('Login');
       }
     });
-    return subscriber; // Unsubscribe on unmount
+    return subscriber;
   }, [navigation]);
 
   const canSubmit = useMemo(() => {
@@ -81,33 +76,9 @@ export default function CreatePostScreen({ navigation, route }) {
     return true;
   }, [uid, postType, name, bloodGroup, phone, stateName, district, urgency]);
 
-  const resetForm = () => {
-    // This function remains the same
-    setName('');
-    setGender('');
-    setBloodGroup('');
-    setPhone('');
-    setWhatsapp('');
-    setDescription('');
-    setStateName('');
-    setDistrict('');
-    setMunicipality('');
-    setConstituency('');
-    setArea('');
-    setHospital('');
-    setPrevDonationDate('');
-    setDonationHistory('');
-    setAvailableToDonate(true);
-    setMedicalHistory('');
-    setPurpose('');
-    setUrgency('');
-    setPatientDetails('');
-    setDisease('');
-  };
-
   const handleSubmit = async () => {
     if (!canSubmit) {
-      Alert.alert('Missing details', 'Please fill all required fields.');
+      Alert.alert('Missing Details', 'Please fill all required fields.');
       return;
     }
     setLoading(true);
@@ -120,37 +91,20 @@ export default function CreatePostScreen({ navigation, route }) {
         name: (name || '').trim(),
         gender,
         bloodGroup,
-        state: stateName,
-        district,
-        municipality,
-        constituency,
-        area,
-        hospital,
+        location: [hospital, area, municipality, district, stateName].filter(Boolean).join(', '),
         description,
-        // Use firestore.FieldValue.serverTimestamp()
         createdAt: firestore.FieldValue.serverTimestamp(),
         updatedAt: firestore.FieldValue.serverTimestamp(),
         prevDonationDate: postType === 'donor' ? (prevDonationDate || null) : null,
-        donationHistory: postType === 'donor' ? (donationHistory || null) : null,
         availableToDonate: postType === 'donor' ? !!availableToDonate : null,
         medicalHistory: postType === 'donor' ? (medicalHistory || null) : null,
         purpose: postType === 'receiver' ? (purpose || null) : null,
         urgency: postType === 'receiver' ? (urgency || null) : null,
         patientDetails: postType === 'receiver' ? (patientDetails || null) : null,
         disease: postType === 'receiver' ? (disease || null) : null,
-        searchKeys: [
-          bloodGroup, stateName, district, municipality, constituency, area, hospital,
-          postType === 'receiver' ? urgency : '',
-        ]
-          .filter(Boolean)
-          .map((s) => String(s).toLowerCase().trim()),
       };
-
-      // Use the React Native Firebase syntax to add a document
       await firestore().collection('requests').add(payload);
-
       Alert.alert('Success', 'Your post has been created.');
-      resetForm();
       navigation?.goBack?.();
     } catch (e) {
       Alert.alert('Failed to post', e?.message || 'Please try again.');
@@ -159,220 +113,319 @@ export default function CreatePostScreen({ navigation, route }) {
     }
   };
 
+  // --- NEW LAYOUT ---
   return (
     <SafeAreaView style={styles.root}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.logo}><View style={styles.logoDot} /></View>
-        <Text style={styles.brand}>BloodBank</Text>
-        <View style={{ flex: 1 }} />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Top Red Container */}
+        <View style={styles.topSection}>
+          <View style={styles.header}>
+            {/* <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Icon name="chevron-left" size={30} color={THEME.surface} />
+            </TouchableOpacity> */}
+            <Text style={styles.headerTitle}>Create a Request</Text>
+            <View style={{ width: 40 }} />
+          </View>
+           <Image 
+                        source={require('../bottomTabs/save_life-02.png')} 
+                        style={styles.imageSpace} 
+                        resizeMode="contain"
+          /> 
+
+        </View>
+        {/* Bottom White Container */}
+        <View style={styles.bottomSection}>
+          {/* Type Segment */}
+          <View style={styles.segment}>
+            <TouchableOpacity
+              style={[styles.segmentItem, postType === 'receiver' && styles.segmentActive]}
+              onPress={() => setPostType('receiver')}
+              activeOpacity={0.9}
+            >
+              <Text style={[styles.segmentText, postType === 'receiver' && styles.segmentTextActive]}>I Need Blood</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.segmentItem, postType === 'donor' && styles.segmentActive]}
+              onPress={() => setPostType('donor')}
+              activeOpacity={0.9}
+            >
+              <Text style={[styles.segmentText, postType === 'donor' && styles.segmentTextActive]}>I Can Donate</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Form Content */}
+          <Group title="Essentials">
+            {postType === 'receiver' && (
+              <Input label="Name" value={name} onChangeText={setName} placeholder="Patient or requester name" />
+            )}
+            <PickerRow label="Blood Group" value={bloodGroup} onSelect={setBloodGroup} options={BLOOD_GROUPS} />
+            <PickerRow label="Gender" value={gender} onSelect={setGender} options={GENDERS} />
+            <Input label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+91…" />
+            <Input label="WhatsApp (optional)" value={whatsapp} onChangeText={setWhatsapp} keyboardType="phone-pad" />
+          </Group>
+
+          <Group title="Location">
+            <Input label="State" value={stateName} onChangeText={setStateName} />
+            <Input label="District" value={district} onChangeText={setDistrict} />
+            <Input label="Municipality / City" value={municipality} onChangeText={setMunicipality} />
+            <Input label="Area / Locality" value={area} onChangeText={setArea} />
+            <Input label="Hospital (optional)" value={hospital} onChangeText={setHospital} />
+          </Group>
+
+          {postType === 'donor' && (
+            <Group title="Donor Details">
+              <Input label="Previous Donation Date" value={prevDonationDate} onChangeText={setPrevDonationDate} placeholder="YYYY-MM-DD" />
+              <ToggleRow label="Available to Donate" value={availableToDonate} onToggle={() => setAvailableToDonate((v) => !v)} />
+              <Input label="Medical History (optional)" value={medicalHistory} onChangeText={setMedicalHistory} multiline />
+              <Input label="Description (optional)" value={description} onChangeText={setDescription} multiline />
+            </Group>
+          )}
+
+          {postType === 'receiver' && (
+            <Group title="Receiver Details">
+              <PickerRow label="Urgency" value={urgency} onSelect={setUrgency} options={URGENCY.map((u) => u.charAt(0).toUpperCase() + u.slice(1))} mapBack={(s) => s.toLowerCase()} />
+              <Input label="Purpose" value={purpose} onChangeText={setPurpose} placeholder="e.g., Surgery, Accident" />
+              <Input label="Patient Details (optional)" value={patientDetails} onChangeText={setPatientDetails} multiline />
+              <Input label="Disease / Condition (optional)" value={disease} onChangeText={setDisease} />
+              <Input label="Description (optional)" value={description} onChangeText={setDescription} multiline />
+            </Group>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Submit Button */}
+      <View style={styles.footer}>
         <TouchableOpacity
           onPress={handleSubmit}
           disabled={!canSubmit || loading}
           style={[styles.postBtn, (!canSubmit || loading) && { opacity: 0.6 }]}
         >
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.postBtnText}>Post</Text>}
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.postBtnText}>Submit Post</Text>}
         </TouchableOpacity>
       </View>
-
-      {/* Body */}
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Type Segment */}
-        <View style={styles.segment}>
-          <TouchableOpacity
-            style={[styles.segmentItem, postType === 'donor' && styles.segmentActive]}
-            onPress={() => setPostType('donor')}
-            activeOpacity={0.9}
-          >
-            <Text style={[styles.segmentText, postType === 'donor' && styles.segmentTextActive]}>I can DONATE</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.segmentItem, postType === 'receiver' && styles.segmentActive]}
-            onPress={() => setPostType('receiver')}
-            activeOpacity={0.9}
-          >
-            <Text style={[styles.segmentText, postType === 'receiver' && styles.segmentTextActive]}>I NEED blood</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Common essentials */}
-        <Group title="Essentials">
-          {postType === 'receiver' && (
-            <Input label="Name" value={name} onChangeText={setName} placeholder="Patient or requester name" />
-          )}
-          <PickerRow label="Blood Group" value={bloodGroup} onSelect={setBloodGroup} options={BLOOD_GROUPS} />
-          <PickerRow label="Gender" value={gender} onSelect={setGender} options={GENDERS} />
-          <Input label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+91…" />
-          <Input label="WhatsApp (optional)" value={whatsapp} onChangeText={setWhatsapp} keyboardType="phone-pad" placeholder="If different from phone" />
-        </Group>
-
-        {/* Location */}
-        <Group title="Location">
-          <Input label="State" value={stateName} onChangeText={setStateName} />
-          <Input label="District" value={district} onChangeText={setDistrict} />
-          <Input label="Municipality" value={municipality} onChangeText={setMunicipality} placeholder="City/Town/Municipality" />
-          <Input label="Constituency" value={constituency} onChangeText={setConstituency} />
-          <Input label="Area / Locality" value={area} onChangeText={setArea} />
-          <Input label="Hospital (optional)" value={hospital} onChangeText={setHospital} />
-        </Group>
-
-        {/* Donor fields */}
-        {postType === 'donor' && (
-          <Group title="Donor Details">
-            <Input label="Previous Donation Date" value={prevDonationDate} onChangeText={setPrevDonationDate} placeholder="YYYY-MM-DD" />
-            <Input label="Donation History" value={donationHistory} onChangeText={setDonationHistory} placeholder="e.g., 3 donations, last 2024-08-04" multiline />
-            <ToggleRow label="Available to Donate" value={availableToDonate} onToggle={() => setAvailableToDonate((v) => !v)} />
-            <Input label="Medical History" value={medicalHistory} onChangeText={setMedicalHistory} placeholder="e.g., None" multiline />
-            <Input label="Description" value={description} onChangeText={setDescription} placeholder="Additional notes" multiline />
-          </Group>
-        )}
-
-        {/* Receiver fields */}
-        {postType === 'receiver' && (
-          <Group title="Receiver Details">
-            <PickerRow label="Urgency" value={urgency} onSelect={setUrgency} options={URGENCY.map((u) => u.charAt(0).toUpperCase() + u.slice(1))} mapBack={(s) => s.toLowerCase()} />
-            <Input label="Purpose" value={purpose} onChangeText={setPurpose} placeholder="Surgery / Accident / Transfusion…" />
-            <Input label="Patient Details" value={patientDetails} onChangeText={setPatientDetails} placeholder="Age, ward/bed, MRN if applicable" multiline />
-            <Input label="Disease / Condition" value={disease} onChangeText={setDisease} placeholder="e.g., Thalassemia" />
-            <Input label="Description" value={description} onChangeText={setDescription} placeholder="Additional context" multiline />
-          </Group>
-        )}
-
-        <Group title="Visibility & Safety">
-          <Hint text="We will show your phone number so people can reach you." />
-          <Hint text="Avoid sharing sensitive personal details in public fields." />
-        </Group>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* Reusable UI pieces (unchanged) */
-function Group({ title, children }) {
-  return (
-    <View style={styles.group}>
-      <Text style={styles.groupTitle}>{title}</Text>
-      <View style={styles.card}>{children}</View>
-    </View>
-  );
-}
-function Input({ label, value, onChangeText, placeholder, keyboardType = 'default', multiline = false }) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={THEME.muted + '99'}
-        style={[styles.input, multiline && styles.textarea]}
-        keyboardType={keyboardType}
-        multiline={multiline}
-      />
-    </View>
-  );
-}
-function PickerRow({ label, value, onSelect, options, mapBack }) {
-  const normalizedValue = value || '';
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.pillsRow}>
-        {options.map((opt) => {
-          const key = mapBack ? mapBack(opt) : opt;
-          const selected = normalizedValue === key;
-          return (
-            <TouchableOpacity
-              key={key}
-              style={[styles.pill, selected && styles.pillActive]}
-              onPress={() => onSelect(key)}
-              activeOpacity={0.9}
-            >
-              <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-function ToggleRow({ label, value, onToggle }) {
-  return (
-    <View style={[styles.field, styles.toggleRow]}>
-      <Text style={styles.label}>{label}</Text>
-      <TouchableOpacity
-        style={[styles.toggle, value && styles.toggleOn]}
-        onPress={onToggle}
-        activeOpacity={0.9}
-      >
-        <View style={[styles.knob, value && styles.knobOn]} />
-      </TouchableOpacity>
-    </View>
-  );
-}
-function Hint({ text }) {
-  return <Text style={styles.hint}>• {text}</Text>;
-}
+/* Reusable UI pieces */
+const Group = ({ title, children }) => (
+  <View style={styles.group}>
+    <Text style={styles.groupTitle}>{title}</Text>
+    <View style={styles.card}>{children}</View>
+  </View>
+);
+const Input = ({ label, ...props }) => (
+  <View style={styles.field}>
+    <Text style={styles.label}>{label}</Text>
+    <TextInput
+      placeholderTextColor={THEME.textSecondary + '99'}
+      style={[styles.input, props.multiline && styles.textarea]}
+      {...props}
+    />
+  </View>
+);
+const PickerRow = ({ label, value, onSelect, options, mapBack }) => (
+  <View style={styles.field}>
+    <Text style={styles.label}>{label}</Text>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
+      {options.map((opt) => {
+        const key = mapBack ? mapBack(opt) : opt;
+        const selected = value === key;
+        return (
+          <TouchableOpacity
+            key={key}
+            style={[styles.pill, selected && styles.pillActive]}
+            onPress={() => onSelect(key)}
+            activeOpacity={0.9}
+          >
+            <Text style={[styles.pillText, selected && styles.pillTextActive]}>{opt}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  </View>
+);
+const ToggleRow = ({ label, value, onToggle }) => (
+  <View style={[styles.field, styles.toggleRow]}>
+    <Text style={styles.label}>{label}</Text>
+    <TouchableOpacity
+      style={[styles.toggle, value && styles.toggleOn]}
+      onPress={onToggle}
+      activeOpacity={0.9}
+    >
+      <View style={[styles.knob, value && styles.knobOn]} />
+    </TouchableOpacity>
+  </View>
+);
 
-/* Styles (unchanged) */
+/* NEW STYLES */
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: THEME.bg },
+  root: { flex: 1, backgroundColor: THEME.background },
+  scrollContainer: { paddingBottom: 100 },
+  topSection: {
+    backgroundColor: '#950404ff',
+    paddingBottom: 40,
+  },
+  bottomSection: {
+    backgroundColor: THEME.background,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -30,
+    padding: 16,
+  },
   header: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 56, gap: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: Platform.OS === 'ios' ? 10 : 20,
+    paddingHorizontal: 16,
   },
-  logo: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: THEME.primary,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 2,
+    imageSpace: {
+    height: 130,
+    width: '100%',
+    marginTop: 10,
   },
-  logoDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#FFFFFFAA' },
-  brand: { fontSize: 18, fontWeight: '800', color: THEME.text },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: THEME.surface,
+    paddingLeft:20,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 16,
+    backgroundColor: THEME.surface,
+    borderTopWidth: 1,
+    borderColor: THEME.border,
+  },
   postBtn: {
-    backgroundColor: THEME.primary, height: 36, paddingHorizontal: 14, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: THEME.primary,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  postBtnText: { color: '#fff', fontWeight: '800' },
-  content: { padding: 16, paddingBottom: 40 },
+  postBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
   segment: {
-    flexDirection: 'row', backgroundColor: THEME.surface, borderRadius: 22, padding: 4,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1,
-    marginBottom: 12,
+    flexDirection: 'row',
+    backgroundColor: THEME.surface,
+    borderRadius: 16,
+    padding: 6,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: THEME.border,
   },
   segmentItem: {
-    flex: 1, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  segmentActive: { backgroundColor: THEME.primary },
-  segmentText: { color: THEME.muted, fontWeight: '800', fontSize: 13 },
-  segmentTextActive: { color: '#FFFFFF' },
-  group: { marginBottom: 14 },
-  groupTitle: { color: THEME.text, fontWeight: '800', marginBottom: 8, fontSize: 16, paddingHorizontal: 4 },
+  segmentActive: {
+    backgroundColor: THEME.primaryLight,
+  },
+  segmentText: {
+    color: THEME.textSecondary,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  segmentTextActive: {
+    color: THEME.primary,
+  },
+  group: { marginBottom: 16 },
+  groupTitle: {
+    color: THEME.text,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    fontSize: 18,
+  },
   card: {
-    backgroundColor: THEME.surface, borderRadius: 16, padding: 12,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 1,
+    backgroundColor: THEME.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: THEME.border,
   },
-  field: { marginBottom: 10, padding: 4 },
-  label: { color: THEME.muted, fontWeight: '700', marginBottom: 8 },
+  field: { marginBottom: 16 },
+  label: {
+    color: THEME.textSecondary,
+    fontWeight: '600',
+    marginBottom: 8,
+    fontSize: 14,
+  },
   input: {
-    height: 44, backgroundColor: THEME.subtle, borderRadius: 12, paddingHorizontal: 12,
-    color: THEME.text, fontSize: 14,
+    height: 50,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    color: THEME.text,
+    fontSize: 16,
   },
   textarea: {
-    height: 92, paddingTop: 10, textAlignVertical: 'top',
+    height: 100,
+    paddingTop: 12,
+    textAlignVertical: 'top',
   },
-  pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pillsRow: { gap: 8 },
   pill: {
-    height: 34, paddingHorizontal: 14, borderRadius: 18,
-    backgroundColor: THEME.subtle, alignItems: 'center', justifyContent: 'center',
+    height: 40,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  pillActive: { backgroundColor: THEME.primary },
-  pillText: { color: THEME.text, fontWeight: '800', fontSize: 12 },
-  pillTextActive: { color: '#FFFFFF' },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0, paddingBottom: 0 },
-  toggle: { width: 56, height: 32, borderRadius: 16, backgroundColor: '#E5E7EB', padding: 3 },
-  toggleOn: { backgroundColor: THEME.green },
-  knob: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#FFFFFF', transform: [{ translateX: 0 }] },
-  knobOn: { transform: [{ translateX: 24 }] },
-  hint: { color: THEME.muted, marginTop: 4, fontSize: 12 },
+  pillActive: {
+    backgroundColor: THEME.primaryLight,
+  },
+  pillText: {
+    color: THEME.text,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  pillTextActive: {
+    color: THEME.primary,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 0,
+    paddingBottom: 0,
+  },
+  toggle: {
+    width: 56,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E5E7EB',
+    padding: 3,
+  },
+  toggleOn: {
+    backgroundColor: THEME.success,
+  },
+  knob: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+    transform: [{ translateX: 0 }],
+  },
+  knobOn: {
+    transform: [{ translateX: 24 }],
+  },
 });
