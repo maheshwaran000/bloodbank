@@ -28,9 +28,10 @@ const THEME = {
   border: '#E5E7EB',
   success: '#16A34A',
   danger: '#B91C1C',
+  warning: '#F59E0B', // For pending status
 };
 
-// --- Helper Functions (Unchanged) ---
+// --- Helper Functions ---
 function timeAgo(date) {
   if (!date) return '';
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -43,7 +44,7 @@ function timeAgo(date) {
   return `${days}d ago`;
 }
 
-// --- UI Components (Unchanged) ---
+// --- UI Components ---
 function PostCard({ post, onPress }) {
   const isDonor = post.type === 'donor';
   return (
@@ -62,6 +63,35 @@ function PostCard({ post, onPress }) {
     </TouchableOpacity>
   );
 }
+
+// --- Updated CAMP REQUEST CARD COMPONENT ---
+function CampRequestCard({ request, onPress }) {
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case 'confirmed': return { backgroundColor: THEME.success, color: '#FFFFFF' };
+            case 'rejected': return { backgroundColor: THEME.danger, color: '#FFFFFF' };
+            case 'pending':
+            default: return { backgroundColor: THEME.warning, color: '#FFFFFF' };
+        }
+    };
+    const statusStyle = getStatusStyle(request.status);
+
+    return (
+        <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.95}>
+            <View style={[styles.marker, { backgroundColor: THEME.primary }]} />
+            <View style={styles.cardBody}>
+                <View style={styles.cardTop}>
+                    <Text style={styles.cardTitle}>{request.organizationName}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
+                        <Text style={[styles.statusText, { color: statusStyle.color }]}>{request.status || 'pending'}</Text>
+                    </View>
+                </View>
+                <Text style={styles.meta}>Proposed Date: {request.proposedDate}</Text>
+            </View>
+        </TouchableOpacity>
+    );
+}
+
 
 function DonationHistorySection({ donationHistory }) {
   const items = Array.isArray(donationHistory) ? donationHistory : [];
@@ -93,11 +123,11 @@ function formatHistoryItem(it) {
 
 // --- Main Screen ---
 export default function UserRequestsScreen({ navigation }) {
-  // --- All State and Logic Preserved ---
   const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState([]);
+  const [campRequests, setCampRequests] = useState([]);
   const [donationHistory, setDonationHistory] = useState([]);
 
   useEffect(() => {
@@ -118,27 +148,34 @@ export default function UserRequestsScreen({ navigation }) {
       setLoading(false);
       return;
     }
-    // No setLoading(true) here to allow for background refresh
     try {
-      const requestsSnapshot = await firestore()
-        .collection('requests')
-        .where('userId', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
-        .get();
-      const rows = requestsSnapshot.docs.map(docSnap => ({
+      const [requestsSnap, campRequestsSnap, userDoc] = await Promise.all([
+        firestore().collection('requests').where('userId', '==', currentUser.uid).orderBy('createdAt', 'desc').get(),
+        firestore().collection('campRequests').where('userId', '==', currentUser.uid).orderBy('createdAt', 'desc').get(),
+        firestore().collection('users').doc(currentUser.uid).get()
+      ]);
+
+      const postRows = requestsSnap.docs.map(docSnap => ({
         id: docSnap.id,
         ...docSnap.data(),
         createdAt: docSnap.data().createdAt ? docSnap.data().createdAt.toDate() : new Date(),
       }));
-      setPosts(rows);
+      setPosts(postRows);
 
-      const userDoc = await firestore().collection('users').doc(currentUser.uid).get();
+      const campRows = campRequestsSnap.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+        createdAt: docSnap.data().createdAt ? docSnap.data().createdAt.toDate() : new Date(),
+      }));
+      setCampRequests(campRows);
+
       const userData = userDoc.exists ? userDoc.data() : {};
       setDonationHistory(userData?.donationHistory || []);
     } catch (e) {
+      console.error(e);
       Alert.alert('Error', e?.message || 'Failed to load data');
     } finally {
-      setLoading(false); // Set loading false after fetch
+      setLoading(false);
     }
   }, []);
 
@@ -154,7 +191,6 @@ export default function UserRequestsScreen({ navigation }) {
     setRefreshing(false);
   }, [fetchAll]);
 
-  // --- NEW LAYOUT ---
   return (
     <SafeAreaView style={styles.root}>
       {loading ? (
@@ -176,8 +212,7 @@ export default function UserRequestsScreen({ navigation }) {
             <>
               <View style={styles.topSection}>
                 <View style={styles.header}>
-                  <Text style={styles.headerTitle}>My Posts & History</Text>
-                  <View style={{ width: 40 }} />
+                  <Text style={styles.headerTitle}>My Activity</Text>
                 </View>
                  <Image 
                   source={require('../bottomTabs/save_life-02.png')} 
@@ -187,6 +222,20 @@ export default function UserRequestsScreen({ navigation }) {
               </View>
               <View style={styles.bottomSection}>
                 <DonationHistorySection donationHistory={donationHistory} />
+                
+                <Text style={styles.listHeaderTitle}>My Camp Requests</Text>
+                {campRequests.length > 0 ? (
+                    campRequests.map(req => (
+                        <CampRequestCard 
+                            key={req.id} 
+                            request={req} 
+                            onPress={() => navigation.navigate('DonationCampDetail', { request: req })}
+                        />
+                    ))
+                ) : (
+                    <Text style={styles.historyEmpty}>You haven't requested any camps yet.</Text>
+                )}
+
                 <Text style={styles.listHeaderTitle}>My Posts</Text>
               </View>
             </>
@@ -195,7 +244,7 @@ export default function UserRequestsScreen({ navigation }) {
             <View style={styles.emptyContainer}>
               <Icon name="file-document-outline" size={48} color={THEME.textSecondary} />
               <Text style={styles.emptyTitle}>You have no posts yet</Text>
-              <Text style={styles.emptySubtitle}>Tap the '+' button to create your first request or donor post.</Text>
+              <Text style={styles.emptySubtitle}>Tap the '+' button to create your first post.</Text>
             </View>
           }
           refreshControl={
@@ -208,18 +257,15 @@ export default function UserRequestsScreen({ navigation }) {
         />
       )}
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('CreatePost')}
-        activeOpacity={0.9}
-      >
-        <Text style={styles.new}>+</Text>
-      </TouchableOpacity>
+      
+      <TouchableOpacity style={styles.fab} activeOpacity={0.9} onPress={() => navigation.navigate("RequestCamp")}>
+               <Text style={styles.new}>Apply for Blood Donation Camp</Text>
+            </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
-// --- NEW STYLES ---
+// --- STYLES ---
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: THEME.background },
   topSection: {
@@ -241,17 +287,10 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 10 : 20,
     paddingHorizontal: 16,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: THEME.surface,
-    paddingLeft:30,
   },
   loadingWrap: {
     flex: 1,
@@ -266,7 +305,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: THEME.text,
     marginBottom: 12,
-    marginTop: 16,
+    marginTop: 24,
   },
   card: {
     flexDirection: 'row',
@@ -305,6 +344,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: THEME.text,
     lineHeight: 20,
+  },
+  statusBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+  },
+  statusText: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      textTransform: 'capitalize',
   },
   historyCard: {
     backgroundColor: THEME.surface,
@@ -352,26 +401,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: Platform.OS === 'ios' ? 40 : 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#aa0606ff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: THEME.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+      position: 'absolute', right: 20, bottom: Platform.OS === 'ios' ? 40 : 20,
+      width:"auto", height: 40, borderRadius: 30, backgroundColor:'#aa0606ff',
+      justifyContent: 'center', alignItems: 'center', elevation: 8,paddingLeft:15,paddingRight:15,
+      shadowColor: THEME.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4,
   },
   new:{
-    color:'#fff',
-    fontSize:25,
+      color:'#fff',
+      fontSize:15,
   },
-    imageSpace: {
+  imageSpace: {
     height: 130,
     width: '100%',
     marginTop: 14,

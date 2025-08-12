@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   topSection: {
     flex: 0.8, // Adjusted flex ratio
-    backgroundColor: THEME.primary,
+    backgroundColor:'#950404ff',
     justifyContent: 'center',
     alignItems: 'center',
   },

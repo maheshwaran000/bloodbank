@@ -11,6 +11,10 @@ import DashboardScreen from '../screens/AuthScreens/bottomTabs/RequestScreen';
 import ProfileScreen from '../screens/AuthScreens/bottomTabs/Profile';
 import CreatePostScreen from '../screens/AuthScreens/UserScrens/createRequest';
 import UserRequestsScreen from '../screens/AuthScreens/UserScrens/userRequests';
+import RequestDetailScreen from '../screens/AuthScreens/UserScrens/requestDetailScreen';
+import UserPostDetailScreen from '../screens/AuthScreens/UserScrens/userPostDetailScreen';
+import RequestCampScreen from '../screens/AuthScreens/UserScrens/requestCampScreen';
+import DonationCampDetailScreen from '../screens/AuthScreens/UserScrens/donationCampDetailsSrceen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -24,6 +28,8 @@ const HomeStack = () => (
      <Stack.Screen name="Request" component={DashboardScreen} />
     {/* <Stack.Screen name="Dashboard" component={UserDashboard} /> */}
     <Stack.Screen name="CreatePost" component={CreatePostScreen} />
+    <Stack.Screen name="RequestDetail" component={RequestDetailScreen} />
+    <Stack.Screen name="RequestCamp" component={RequestCampScreen} />
 
   </Stack.Navigator>
 );
@@ -32,6 +38,10 @@ const HomeStack = () => (
 const RequestStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="UserRequests" component={UserRequestsScreen} />
+     <Stack.Screen name="PostDetailsScreen" component={UserPostDetailScreen} />
+     <Stack.Screen name="RequestCamp" component={RequestCampScreen} />
+     <Stack.Screen name="DonationCampDetail" component={DonationCampDetailScreen} />
+
   </Stack.Navigator>
 );
 

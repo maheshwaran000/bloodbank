@@ -194,7 +194,7 @@ export default function DashboardScreen() {
       <FlatList
         data={filteredPosts}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <FeedCard post={item} onPress={() => navigation.navigate("PostDetailsScreen", { post: item })} />}
+        renderItem={({ item }) => <FeedCard post={item} onPress={() => navigation.navigate("RequestDetail", { post: item })} />}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.primary} />}
         ListHeaderComponent={
           <>
@@ -208,16 +208,16 @@ export default function DashboardScreen() {
               /> 
               <View style={styles.actionsContainer}>
                 <ActionRow 
-                  icon="water-plus-outline"
+                  // icon="water-plus-outline"
                   title="I Need Blood" 
                   subtitle="Create a request" 
                   onPress={() => navigation.navigate("CreatePost", { type: 'receiver' })}
                 />
                 <ActionRow 
-                  icon="account-heart-outline" 
+                  // icon="account-heart-outline" 
                   title="I Want to Donate" 
                   subtitle="Find requests" 
-                  onPress={() => { /* Navigate or filter */ }}
+                  onPress={() => navigation.navigate("CreatePost", { type: 'receiver' })}
                   isReversed
                 />
               </View>
@@ -255,8 +255,8 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.listContainer}
       />
 
-      <TouchableOpacity style={styles.fab} activeOpacity={0.9} onPress={() => navigation.navigate("CreatePost")}>
-           <Text style={styles.new}>+</Text>
+      <TouchableOpacity style={styles.fab} activeOpacity={0.9} onPress={() => navigation.navigate("RequestCamp")}>
+           <Text style={styles.new}>Apply for Blood Donation Camp</Text>
       </TouchableOpacity>
 
       <Modal transparent animationType="slide" visible={showFilters} onRequestClose={() => setShowFilters(false)}>
@@ -455,13 +455,13 @@ const styles = StyleSheet.create({
 
   fab: {
     position: 'absolute', right: 20, bottom: Platform.OS === 'ios' ? 40 : 20,
-    width: 60, height: 60, borderRadius: 30, backgroundColor:'#aa0606ff',
-    justifyContent: 'center', alignItems: 'center', elevation: 8,
+    width:"auto", height: 40, borderRadius: 30, backgroundColor:'#aa0606ff',
+    justifyContent: 'center', alignItems: 'center', elevation: 8,paddingLeft:15,paddingRight:15,
     shadowColor: THEME.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4,
   },
   new:{
     color:'#fff',
-    fontSize:25,
+    fontSize:15,
   },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: THEME.background },
   emptyContainer: { marginTop: 40, alignItems: 'center', justifyContent: 'center' },

@@ -24,7 +24,7 @@ const THEME = {
   textSecondary: '#6B7280',
   border: '#DDDDDD',
   error: '#B91C1C',
-  status:'#D10000'
+  status:'#950404ff'
 };
 
 export const PhoneEntryScreen = ({ navigation }) => {
@@ -73,7 +73,7 @@ export const PhoneEntryScreen = ({ navigation }) => {
       >
         {/* Use ImageBackground for the top section */}
         <ImageBackground
-          source={require('../../assets/perfect.jpg')}
+          source={require('../../assets/chiru.jpeg')}
           style={styles.topSection}
           resizeMode="cover" // This makes the image fill the container
         >
@@ -82,7 +82,7 @@ export const PhoneEntryScreen = ({ navigation }) => {
 
         {/* Bottom Section with Form */}
         <View style={styles.bottomSection}>
-          <Text style={styles.title}>LOGIN & REGISTER</Text>
+          {/* <Text style={styles.title}>LOGIN & REGISTER</Text> */}
           <Text style={styles.subtitle}>Enter your mobile number to continue</Text>
 
           {/* Phone Input Container */}
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   },
   topSection: {
     // Increased flex to make the image taller
-    flex: 1.2, 
+    flex: 1.9, 
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: THEME.primary, // Ensures background color behind image
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 25,
-    paddingVertical: 30,
+    paddingVertical: 20,
     // The negative margin is key for the overlapping curve effect
     marginTop: -30, 
     elevation: 10,
@@ -169,14 +169,15 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   title: {
-    fontSize: 22,
+    fontSize: 17,
     fontWeight: 'bold',
     color: THEME.text,
     textAlign: 'center',
     letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 17,
+    fontWeight:500,
     color: THEME.textSecondary,
     textAlign: 'center',
     marginTop: 8,
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
     borderColor: THEME.border,
   },
   flagButton: {
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   callingCode: {
     fontSize: 16,
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
   continueButton: {
     // backgroundColor: THEME.background,
     backgroundColor:'#750000',
-    paddingVertical: 18,
+    paddingVertical: 15,
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
