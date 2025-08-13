@@ -12,14 +12,16 @@ import {
   Alert,
   Platform,
   Image,
+  StatusBar
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useFocusEffect } from '@react-navigation/native';
 
 // --- THEME ---
 const THEME = {
-  primary: '#C81E1E',
+  primary: '#950404ff',
   primaryLight: '#FEE2E2',
   background: '#F8F9FA',
   surface: '#FFFFFF',
@@ -27,7 +29,7 @@ const THEME = {
   textSecondary: '#6B7280',
   border: '#E5E7EB',
   success: '#16A34A',
-  danger: '#B91C1C',
+  danger: '#950404ff',
   warning: '#F59E0B', // For pending status
 };
 
@@ -142,6 +144,21 @@ export default function UserRequestsScreen({ navigation }) {
     return () => unsub();
   }, [navigation]);
 
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle('light-content');
+      if (Platform.OS === 'android') {
+        StatusBar.setBackgroundColor(THEME.primary);
+      }
+      return () => {
+        // Optional: Reset status bar style when screen is unfocused
+        StatusBar.setBarStyle('default');
+         if (Platform.OS === 'android') {
+          StatusBar.setBackgroundColor(THEME.background); // Or your app's default color
+        }
+      };
+    }, [])
+  );
   const fetchAll = useCallback(async () => {
     const currentUser = auth().currentUser;
     if (!currentUser) {

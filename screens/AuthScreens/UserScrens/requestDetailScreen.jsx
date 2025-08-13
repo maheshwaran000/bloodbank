@@ -9,13 +9,17 @@ import {
     SafeAreaView,
     Platform,
     Linking,
-    Image
+    Image,
+    StatusBar
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { BackArrowIcon ,CallIcon,WhatsAppIcon,CircleMediumIcon} from '../svgComponent';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 // --- THEME ---
 const THEME = {
-  primary: '#C81E1E',
+  primary: '#950404ff',
   primaryLight: '#FEE2E2',
   background: '#F8F9FA',
   surface: '#FFFFFF',
@@ -23,7 +27,7 @@ const THEME = {
   textSecondary: '#6B7280',
   border: '#E5E7EB',
   success: '#16A34A',
-  danger: '#B91C1C',
+  danger: '#950404ff',
 };
 
 // --- Main Screen ---
@@ -37,6 +41,22 @@ const RequestDetailScreen = ({ route, navigation }) => {
       Linking.openURL(`tel:${post.phone}`);
     }
   };
+
+  useFocusEffect(
+          useCallback(() => {
+            StatusBar.setBarStyle('light-content');
+            if (Platform.OS === 'android') {
+              StatusBar.setBackgroundColor(THEME.primary);
+            }
+            return () => {
+              // Optional: Reset status bar style when screen is unfocused
+              StatusBar.setBarStyle('default');
+              if (Platform.OS === 'android') {
+                StatusBar.setBackgroundColor(THEME.background); // Or your app's default color
+              }
+            };
+          }, [])
+    );
 
   // Helper function to open WhatsApp
   const handleWhatsApp = () => {
@@ -56,7 +76,7 @@ const RequestDetailScreen = ({ route, navigation }) => {
         <View style={styles.topSection}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Icon name="chevron-left" size={30} color={THEME.surface} />
+                   <BackArrowIcon width={38} height={20} color="white" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{isDonor ? 'Donor Details' : 'Request Details'}</Text>
                 <View style={{ width: 40 }} />
@@ -94,11 +114,11 @@ const RequestDetailScreen = ({ route, navigation }) => {
 
             <View style={styles.actionsContainer}>
                 <TouchableOpacity style={styles.actionButtonPrimary} onPress={handleCall}>
-                    <Icon name="phone-outline" size={20} color={THEME.surface} />
+                    <CallIcon width={20} height={20} color="#fff" />
                     <Text style={styles.actionButtonText}>Call Now</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.actionButtonSecondary} onPress={handleWhatsApp}>
-                    <Icon name="whatsapp" size={20} color={THEME.primary} />
+                    <WhatsAppIcon width={20} height={20} />  {/* Default green */}
                     <Text style={[styles.actionButtonText, { color: THEME.primary }]}>WhatsApp</Text>
                 </TouchableOpacity>
             </View>
@@ -112,7 +132,8 @@ const InfoRow = ({ label, value, isVisible = true }) => {
     if (!isVisible || !value) return null;
     return (
         <View style={styles.infoRow}>
-            <Icon name="circle-medium" size={24} color={THEME.primary} style={styles.infoIcon} />
+            <CircleMediumIcon width={24} height={24} color={THEME.primary} style={styles.infoIcon}/>
+
             <View>
                 <Text style={styles.label}>{label}</Text>
                 <Text style={styles.info}>{value}</Text>

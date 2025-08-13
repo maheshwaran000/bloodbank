@@ -18,6 +18,9 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { BackArrowIcon } from '../svgComponent';
+
 
 // --- THEME ---
 const THEME = {
@@ -112,7 +115,7 @@ export default function RequestCampScreen({ navigation }) {
         <View style={styles.topSection}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Icon name="chevron-left" size={30} color={THEME.surface} />
+              <BackArrowIcon name="chevron-left" size={30} color={THEME.surface} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Organize a Camp</Text>
             <View style={{ width: 40 }} />

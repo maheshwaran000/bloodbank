@@ -11,15 +11,19 @@ import {
   Alert,
   SafeAreaView,
   Platform,
-  Image
+  Image,
+  StatusBar
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { EditPenIcon,TickIcon } from '../svgComponent';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 // --- THEME ---
 const THEME = {
-  primary: '#C81E1E',
+  primary: '#950404ff',
   primaryLight: '#FEE2E2',
   background: '#F8F9FA',
   surface: '#FFFFFF',
@@ -62,7 +66,21 @@ export default function ProfileScreen({ navigation }) {
     });
     return subscriber;
   }, [navigation, loading]);
-
+  useFocusEffect(
+      useCallback(() => {
+        StatusBar.setBarStyle('light-content');
+        if (Platform.OS === 'android') {
+          StatusBar.setBackgroundColor(THEME.primary);
+        }
+        return () => {
+          // Optional: Reset status bar style when screen is unfocused
+          StatusBar.setBarStyle('default');
+          if (Platform.OS === 'android') {
+            StatusBar.setBackgroundColor(THEME.background); // Or your app's default color
+          }
+        };
+      }, [])
+    );
   const startEdit = (key) => setEditing((e) => ({ ...e, [key]: true }));
   const cancelEdit = (key) => setEditing((e) => ({ ...e, [key]: false }));
 
@@ -132,15 +150,15 @@ export default function ProfileScreen({ navigation }) {
             {isEditing ? (
               <>
                 <TouchableOpacity onPress={() => cancelEdit(keyName)}>
-                  <Icon name="close-circle-outline" size={24} color={THEME.textSecondary} />
+                  <EditPenIcon width={20} height={20} color="#ff9800" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => saveField(keyName, temp)} disabled={savingKey === keyName}>
-                  {savingKey === keyName ? <ActivityIndicator size="small" color={THEME.primary} /> : <Icon name="check-circle-outline" size={24} color={THEME.success} />}
+                  {savingKey === keyName ? <ActivityIndicator size="small" color={THEME.primary} /> : <TickIcon width={28} height={28} color="green" />}
                 </TouchableOpacity>
               </>
             ) : (
               <TouchableOpacity onPress={() => startEdit(keyName)}>
-                <Icon name="pencil-outline" size={24} color={THEME.primary} />
+               <EditPenIcon width={20} height={20} color="#a1a1a0ff" />
               </TouchableOpacity>
             )}
           </View>

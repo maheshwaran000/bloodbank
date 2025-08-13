@@ -12,10 +12,14 @@ import {
     Share,
     TextInput,
     ActivityIndicator,
-    Image
+    Image,
+    StatusBar
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { BackArrowIcon,DeleteIcon,EditPenIcon, ShareIcon } from '../svgComponent';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 // --- THEME ---
 const THEME = {
@@ -42,7 +46,21 @@ const DonationCampDetailScreen = ({ route, navigation }) => {
   useEffect(() => {
     setEditableData(request || {});
   }, [request]);
-
+  useFocusEffect(
+        useCallback(() => {
+          StatusBar.setBarStyle('light-content');
+          if (Platform.OS === 'android') {
+            StatusBar.setBackgroundColor(THEME.primary);
+          }
+          return () => {
+            // Optional: Reset status bar style when screen is unfocused
+            StatusBar.setBarStyle('default');
+            if (Platform.OS === 'android') {
+              StatusBar.setBackgroundColor(THEME.background); // Or your app's default color
+            }
+          };
+        }, [])
+  );
   const handleInputChange = (key, value) => {
     setEditableData(prev => ({ ...prev, [key]: value }));
   };
@@ -97,6 +115,7 @@ const DonationCampDetailScreen = ({ route, navigation }) => {
       setIsEditing(false);
     } catch (error) {
       Alert.alert("Error", "Could not update the request.");
+      console.log(error)
     } finally {
       setLoading(false);
     }
@@ -130,13 +149,13 @@ const DonationCampDetailScreen = ({ route, navigation }) => {
             <View style={styles.topSection}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Icon name="chevron-left" size={30} color={THEME.surface} />
+                        <BackArrowIcon width={20} height={20} color="#fff" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Donation Camp Details</Text>
                     {/* Only show edit button if status is pending */}
                     {request.status === 'pending' ? (
                         <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
-                            <Icon name={isEditing ? "close-circle-outline" : "pencil-outline"} size={24} color={THEME.surface} />
+                            <EditPenIcon width={20} height={20} color="#fff" />
                         </TouchableOpacity>
                     ) : <View style={{width: 40}} />}
                 </View>
@@ -175,8 +194,8 @@ const DonationCampDetailScreen = ({ route, navigation }) => {
                     </TouchableOpacity>
                 ) : (
                     <View style={styles.actionsContainer}>
-                        <ActionButton icon="share-variant-outline" text="Share" onPress={handleShare} />
-                        <ActionButton icon="delete-outline" text="Delete" onPress={handleDelete} color={THEME.danger} />
+                        <ActionButton  text="Share" onPress={handleShare} />
+                        <ActionButton text="Delete" onPress={handleDelete} color={THEME.danger} />
                     </View>
                 )}
             </View>

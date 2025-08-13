@@ -14,23 +14,27 @@ import {
   Modal,
   Pressable,
   Image,
+  StatusBar
 } from "react-native";
 import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import  {BloodDropIcon, ProfileIcon, SearchIcon,ChevronRightIcon,NotificationIcon} from "../svgComponent";
+import { useFocusEffect } from "@react-navigation/native";
+
 
 // --- THEME ---
 const THEME = {
   background: "#F8F9FA",
   surface: "#FFFFFF",
-  primary: "#C81E1E",
+  primary: "#950404ff",
   primaryLight: "#FEE2E2",
   text: "#1F2937",
   textSecondary: "#6B7280",
   border: "#E5E7EB",
   success: "#16A34A",
-  danger: "#B91C1C",
+  danger: "#950404ff",
 };
 
 // --- Helper Functions ---
@@ -55,7 +59,7 @@ const DashboardHeader = ({ userName }) => (
       <Text style={styles.headerSubtitle}>Ready to save a life today?</Text>
     </View>
     <TouchableOpacity style={styles.profileChip}>
-      {/* <Icon name="account-outline" size={24} color={THEME.primary} /> */}
+      <NotificationIcon name="account-outline" size={24} color='#fff' />
     </TouchableOpacity>
   </View>
 );
@@ -84,7 +88,7 @@ const FeedCard = ({ post, onPress }) => {
     <TouchableOpacity style={styles.feedCard} onPress={onPress} activeOpacity={0.9}>
       {/* Left Icon Container */}
       <View style={styles.feedCardIconContainer}>
-        <Icon name={isDonor ? "account-heart-outline" : "water-plus-outline"} size={28} color={isDonor ? THEME.success : THEME.danger} />
+        <ProfileIcon name={isDonor ? "account-heart-outline" : "water-plus-outline"} size={28} color={isDonor ? THEME.success : THEME.danger} />
         <Text style={styles.feedCardBloodGroup}>{post.bloodGroup}</Text>
       </View>
 
@@ -97,7 +101,7 @@ const FeedCard = ({ post, onPress }) => {
       </View>
 
       {/* Right Chevron Icon */}
-      <Icon name="chevron-right" size={24} color={THEME.textSecondary} />
+      <ChevronRightIcon name="chevron-right" size={24} color={THEME.textSecondary} />
     </TouchableOpacity>
   );
 };
@@ -151,6 +155,21 @@ export default function DashboardScreen() {
     return () => { userSub(); postsSub(); };
   }, []);
 
+  useFocusEffect(
+      useCallback(() => {
+        StatusBar.setBarStyle('light-content');
+        if (Platform.OS === 'android') {
+          StatusBar.setBackgroundColor(THEME.primary);
+        }
+        return () => {
+          // Optional: Reset status bar style when screen is unfocused
+          StatusBar.setBarStyle('default');
+           if (Platform.OS === 'android') {
+            StatusBar.setBackgroundColor(THEME.background); // Or your app's default color
+          }
+        };
+      }, [])
+    );
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
@@ -226,7 +245,7 @@ export default function DashboardScreen() {
             {/* The bottom section starts here, with the new styles */}
             <View style={styles.bottomSection}>
               <View style={styles.searchBar}>
-                <Icon name="magnify" size={22} color={THEME.textSecondary} style={{marginRight: 8}}/>
+                <SearchIcon size={15} color={THEME.textSecondary} style={{marginRight: 8}}/>
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search by name or location..."
@@ -238,7 +257,6 @@ export default function DashboardScreen() {
               <View style={styles.feedHeader}>
                 <Text style={styles.feedTitle}>Live Feed</Text>
                 <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(true)}>
-                  <Icon name="tune-variant" size={16} color={THEME.primary} />
                   <Text style={styles.feedFilterText}>Filters</Text>
                 </TouchableOpacity>
               </View>
@@ -322,16 +340,16 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)', 
     marginTop: 4 
   },
-  profileChip: {
-    width: 32,
-    height: 32,
-    borderRadius: 26,
-    backgroundColor: THEME.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-  },
+  // profileChip: {
+  //   width: 32,
+  //   height: 32,
+  //   borderRadius: 26,
+  //   backgroundColor: THEME.surface,
+  //   justifyContent: 'center',
+  //   alignItems: 'center',
+  //   borderWidth: 2,
+  //   borderColor: 'rgba(255, 255, 255, 0.5)',
+  // },
   imageSpace: {
     height: 140,
     width: '100%',
@@ -363,8 +381,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actionIconContainer: {
-    width: 44,
-    height: 44,
+    width: 35,
+    height: 35,
     borderRadius: 32,
     backgroundColor: THEME.surface,
     justifyContent: 'center',

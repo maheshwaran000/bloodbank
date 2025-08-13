@@ -12,10 +12,13 @@ import {
     Share,
     TextInput,
     ActivityIndicator,
-    Image
+    Image,StatusBar
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { BackArrowIcon,EditPenIcon } from '../svgComponent';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 // --- THEME ---
 const THEME = {
@@ -78,6 +81,21 @@ const UserPostDetailScreen = ({ route, navigation }) => {
   useEffect(() => {
     setEditableData(post || {});
   }, [post]);
+  useFocusEffect(
+          useCallback(() => {
+            StatusBar.setBarStyle('light-content');
+            if (Platform.OS === 'android') {
+              StatusBar.setBackgroundColor(THEME.primary);
+            }
+            return () => {
+              // Optional: Reset status bar style when screen is unfocused
+              StatusBar.setBarStyle('default');
+              if (Platform.OS === 'android') {
+                StatusBar.setBackgroundColor(THEME.background); // Or your app's default color
+              }
+            };
+          }, [])
+    );
 
   // --- HANDLERS ---
   const handleInputChange = (key, value) => setEditableData(prev => ({ ...prev, [key]: value }));
@@ -106,9 +124,9 @@ const UserPostDetailScreen = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.topSection}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}><Icon name="chevron-left" size={30} color={THEME.surface} /></TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}><BackArrowIcon size={30} color={THEME.surface} /></TouchableOpacity>
                     <Text style={styles.headerTitle}>Manage Your Post</Text>
-                    <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}><Icon name={isEditing ? "close-circle-outline" : "pencil-outline"} size={24} color={THEME.surface} /></TouchableOpacity>
+                    <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}><EditPenIcon name={isEditing ? "close-circle-outline" : "pencil-outline"} size={24} color={THEME.surface} /></TouchableOpacity>
                 </View>
                 <Image source={require('../bottomTabs/save_life-02.png')} style={styles.imageSpace} resizeMode="contain" /> 
             </View>
@@ -136,8 +154,8 @@ const UserPostDetailScreen = ({ route, navigation }) => {
                     <TouchableOpacity style={styles.updateButton} onPress={handleUpdate} disabled={loading}>{loading ? <ActivityIndicator color={THEME.surface} /> : <Text style={styles.actionButtonText}>Update Post</Text>}</TouchableOpacity>
                 ) : (
                     <View style={styles.actionsContainer}>
-                        <ActionButton icon="share-variant-outline" text="Share" onPress={handleShare} />
-                        <ActionButton icon="delete-outline" text="Delete" onPress={handleDelete} color={THEME.danger} />
+                        <ActionButton text="Share" onPress={handleShare} />
+                        <ActionButton  text="Delete" onPress={handleDelete} color={THEME.danger} />
                     </View>
                 )}
             </View>

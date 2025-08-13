@@ -3,6 +3,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { RequestIcon,HomeIcon,ProfileIcon } from '../screens/AuthScreens/svgComponent';
 
 // Screens
 // import UserDashboard from '../screens/AuthScreens/UserScrens/UserDashboard';
@@ -19,8 +20,8 @@ import DonationCampDetailScreen from '../screens/AuthScreens/UserScrens/donation
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-const ACCENT = '#4F46E5';
-const INACTIVE = '#777';
+const ACCENT = '#c42727ff';
+const INACTIVE = '#950404ff';
 
 // Home Stack
 const HomeStack = () => (
@@ -60,11 +61,30 @@ const UserStack = () => (
         let iconName;
 
         if (route.name === 'Home') {
-          iconName = focused ? 'home' : 'home-outline';
+          // iconName = focused ? 'home' : 'home-outline';
+           return (
+            <HomeIcon
+              width={size}
+              height={size}
+              color={focused ? color : '#950404ff'} // active vs inactive
+            />
+          );
         } else if (route.name === 'Request') {
-          iconName = focused ? 'plus-box' : 'plus-box-outline';
+           return (
+            <RequestIcon
+              width={size}
+              height={size}
+              color={focused ? color : '#950404ff'}
+            />
+          );
         } else if (route.name === 'Profile') {
-          iconName = focused ? 'account-circle' : 'account-circle-outline';
+           return (
+            <ProfileIcon
+              width={size}
+              height={size}
+              color={focused ? color : '#950404ff'}
+            />
+          );
         }
 
         return <Icon name={iconName} size={size} color={color} />;
